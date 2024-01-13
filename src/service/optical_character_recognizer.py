@@ -1,11 +1,9 @@
 import math
 import re
 import statistics
-from collections import Counter
 
 import cv2
 import matplotlib.pyplot as plt
-import seaborn as sns
 import nltk
 import numpy as np
 import pytesseract
@@ -13,7 +11,7 @@ import skimage.metrics
 
 from src.models.processing_pipeline import ProcessingPipeline
 from src.service.color import get_luminance_rgb, color_split
-from src.service.image_transformer import keep_white_pixels, canny_edge_detection_text_fill
+from src.service.image_transformer import canny_edge_detection_text_fill
 from src.service.tokenization import perform_segmentation
 
 plt.rcParams['figure.figsize'] = (19.2, 10.8)
@@ -153,7 +151,7 @@ class OpticalCharacterRecognizer:
                     break
 
         if images_considered:
-            LUMINANCE_DELTA = -100 if is_light_text else 15
+            LUMINANCE_DELTA = -15 if is_light_text else 15
             SATURATION_DELTA = 25
             # Using the extracted luminance and differences set the luminance and saturation thresholds
             self.threshold = (statistics.mean(foreground_luminances) + LUMINANCE_DELTA,
@@ -213,7 +211,8 @@ class OpticalCharacterRecognizer:
 
             # Otherwise we would like to integrate all previous frames when either one frame is black and the other is
             # not, or when the RMSE > cutoff
-            elif is_comparison_frame_blank != is_candidate_frame_blank or skimage.metrics.normalized_root_mse(comparison_frame, candidate_frame) > rmse_cutoff:
+            elif is_comparison_frame_blank != is_candidate_frame_blank or skimage.metrics.normalized_root_mse(
+                    comparison_frame, candidate_frame) > rmse_cutoff:
                 integrated_frames.append(processing_pipeline.apply_reduction(np.stack(images[left:right + 1])))
                 left = right + 1
             right += 1
