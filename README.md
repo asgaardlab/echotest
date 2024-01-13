@@ -15,8 +15,8 @@ The *ECHOTEST* Audio-Subtitle Matching Tool is a command-line utility for identi
 Clone the repository and install the required dependencies:
 
 ```bash
-git clone https://github.com/TODO
-cd TODO
+git clone https://github.com/asgaardlab/echotest
+cd echotest
 pip install -r requirements.txt
 ```
 
@@ -25,3 +25,4 @@ pip install -r requirements.txt
 ```python echotest.py --file=path/to/your/video/file.mp4 --darkText=False```
 
 - **file**: Path to the video file for testing. It should have a video extension.
+- **darkText**: True if the text is dark on light, can be omitted otherwise
