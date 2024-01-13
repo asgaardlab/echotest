@@ -222,49 +222,6 @@ class OpticalCharacterRecognizer:
         integrated_frames.append(processing_pipeline.apply_reduction(np.stack(images[left:right + 1])))
         return integrated_frames
 
-    def integrate_frames_benchmark(self, images, processing_pipeline: ProcessingPipeline, rmse_cutoff=0.7):
-        """
-        Version of integrate frames used for benchmarking purposes
-        """
-        # First we apply pipeline transformation on images prior to comparison
-        rmse_scores = []
-        transformed = []
-        for image in images:
-            processed_image = processing_pipeline.apply_on_image(image)
-            transformed.append(processed_image)
-
-        h, w, d = processed_image.shape
-        left = 0  # Index of leftmost image in considered integration stack
-        right = 0  # Index of rightmost image in considered integration stack
-        while right < len(images) - 1:
-            candidate_frame = transformed[right + 1]
-            comparison_frame = transformed[right]
-            # Special case: comparison frame is considered blank, we can just ignore it
-            is_comparison_frame_blank = (np.count_nonzero(comparison_frame) / (h * w * d)) < 0.001
-            is_candidate_frame_blank = (np.count_nonzero(candidate_frame) / (h * w * d)) < 0.001
-            rmse = skimage.metrics.normalized_root_mse(comparison_frame, candidate_frame)
-            rmse_scores.append(rmse)
-            if is_comparison_frame_blank:
-                reduced = processing_pipeline.apply_reduction(np.stack(images[left:right + 1]))
-                for i in range(left, right + 1):
-                    images[i] = reduced
-                left = right + 1  # We can ignore this frame, and move on to the next
-
-            # Otherwise we would like to integrate all previous frames when either one frame is black and the other is
-            # not, or when the RMSE > cutoff
-            elif is_comparison_frame_blank != is_candidate_frame_blank or rmse > rmse_cutoff:
-                reduced = processing_pipeline.apply_reduction(np.stack(images[left:right + 1]))
-                for i in range(left, right + 1):
-                    images[i] = reduced
-                left = right + 1
-            right += 1
-
-        # Integrate remaining frames
-        reduced = processing_pipeline.apply_reduction(np.stack(images[left:right + 1]))
-        for i in range(left, right + 1):
-            images[i] = reduced
-        return images
-
     def mean_fill_reduce(self, images, is_light_text=True):
         mean = self.crop_image(np.mean(images, axis=0))
         mean = np.clip(mean, 0, 255).astype(images.dtype)
